@@ -10,7 +10,7 @@ EMAIL="your_twitter_email"
 PASSWORD="your_twitter_password"
 VERIFICATION="account_phone_or_username" # account's phone number or username
 
-# browser
+# browser (not needed for deployment with Docker)
 BROWSER="/path/to/chrome/executable" # for puppeteer
 HEADLESS=false # weather to run the browser in headless mode or not
 
