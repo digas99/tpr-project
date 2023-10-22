@@ -8,7 +8,7 @@ To run the Twitter bot, you have to first create a .env file inside the folder `
 # auth
 EMAIL="your_twitter_email"
 PASSWORD="your_twitter_password"
-PHONE="phone_number" # deal with twitter's unusual activity phone verification
+VERIFICATION="account_phone_or_username" # account's phone number or username
 
 # browser
 BROWSER="/path/to/chrome/executable" # for puppeteer

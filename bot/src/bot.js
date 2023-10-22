@@ -3,7 +3,7 @@ const { login } = require('./login.js');
 
 USER = process.env.EMAIL;
 PASS = process.env.PASSWORD;
-PHONE = process.env.PHONE;
+VERIFICATION = process.env.VERIFICATION;
 BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 LOGIN_URL = process.env.URL;
@@ -12,6 +12,6 @@ LOGIN_URL = process.env.URL;
 (async () => {
 	console.log("Starting bot...");
 
-	const page = await login(USER, PASS, LOGIN_URL, BROWSER, HEADLESS);
+	const page = await login(USER, PASS, VERIFICATION, LOGIN_URL, BROWSER, HEADLESS);
 	console.log("Logged in successfully!");
 })();

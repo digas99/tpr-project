@@ -2,7 +2,7 @@ const puppeteer = require('puppeteer');
 const utils = require('../utils/utils.js');
 
 module.exports = {
-	login: async (user, pass, url, executable, headless=false) => {
+	login: async (user, pass, verification, url, executable, headless=false) => {
 		const options = {
 			headless: headless,
 			executablePath: executable,
@@ -32,13 +32,13 @@ module.exports = {
 		const passwordSelector = "input[autocomplete='current-password']";
 		const passwordInput = await page.$(passwordSelector);
 		if (!passwordInput) {
-			console.log("Password input not found, checking for phone verification...");
+			console.log("Password input not found, checking for verification...");
 			
-			// fill twitter's unusual activity phone verification
-			const phoneSelector = "input[data-testid='ocfEnterTextTextInput']";
-			await page.waitForSelector(phoneSelector);
-			console.log("Filling in phone number...");
-			await page.type(phoneSelector, process.env.PHONE);
+			// fill twitter's unusual activity phone/username verification
+			const verificationSelector = "input[data-testid='ocfEnterTextTextInput']";
+			await page.waitForSelector(verificationSelector);
+			console.log("Filling in verification text...");
+			await page.type(verificationSelector, verification);
 			nextButton = await utils.getElementByInnerText(page, "div[role='button'] div[dir='ltr']", "Next");
 			await nextButton.click();
 		}	
