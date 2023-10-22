@@ -12,7 +12,7 @@ VERIFICATION="account_phone_or_username" # account's phone number or username
 
 # browser (not needed for deployment with Docker)
 BROWSER="/path/to/chrome/executable" # for puppeteer
-HEADLESS=false # weather to run the browser in headless mode or not
+HEADLESS=false # whether to run the browser in headless mode or not
 
 # url
 URL="https://twitter.com/i/flow/login" # twitter login page
