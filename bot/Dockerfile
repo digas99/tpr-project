@@ -23,4 +23,7 @@ COPY . .
 # force headless browser mode
 ENV HEADLESS true
 
+# set chrome executable path
+ENV BROWSER "/usr/bin/google-chrome"
+
 CMD [ "node", "src/bot.js" ]
