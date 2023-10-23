@@ -1,29 +1,38 @@
-module.exports = {
-	getTimelinePost: async (page, index) => {
+class Commands {
+	constructor(page) {
+		this.page = page;
+	}
+
+	async getTimelinePost(index) {
 		const postSelector = `div[aria-label='Timeline: Your Home Timeline'] div[data-testid='cellInnerDiv']:nth-child(${index}) article[data-testid='tweet']`;
-		await page.waitForSelector(postSelector);
+		await this.page.waitForSelector(postSelector);
 		console.log(`Found post ${index}`);
-		return await page.$(postSelector);
-	},
-	likePost: async (post) => {
+		return await this.page.$(postSelector);
+	}
+
+	async likePost(post) {
 		const likeButton = await post.$("div[data-testid='like']");
 		await likeButton.click();
 		console.log("Liked post!");
-	},
-	dislikePost: async (post) => {
+	}
+
+	async dislikePost(post) {
 		const dislikeButton = await post.$("div[data-testid='unlike']");
 		await dislikeButton.click();
 		console.log("Disliked post!");
-	},
-	makePost: async (page, text) => {
+	}
+
+	async makePost(text) {
 		const textSelector = "div[data-testid='tweetTextarea_0']";
-		await page.waitForSelector(textSelector);
-		await page.focus(textSelector);
-		await page.keyboard.type(text);
+		await this.page.waitForSelector(textSelector);
+		await this.page.focus(textSelector);
+		await this.page.keyboard.type(text);
 		
-		const postButton = await page.$("div[data-testid='tweetButtonInline']");
+		const postButton = await this.page.$("div[data-testid='tweetButtonInline']");
 		await postButton.click();
 		console.log("Created Post!");
 		console.log(`Text: ${text}`);
 	}
 }
+
+module.exports = Commands;

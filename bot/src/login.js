@@ -54,6 +54,8 @@ module.exports = {
 		// wait for page to load
 		await page.waitForNavigation();
 
+		console.log("Logged in successfully!");
+
 		return page;
 	}
 }

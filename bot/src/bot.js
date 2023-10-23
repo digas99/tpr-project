@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { login } = require('./login.js');
-const commands = require('./commands.js');
+const Commands = require('./commands.js');
 
 USER = process.env.EMAIL;
 PASS = process.env.PASSWORD;
@@ -14,9 +14,10 @@ LOGIN_URL = process.env.URL;
 	console.log("Starting bot...");
 
 	const page = await login(USER, PASS, VERIFICATION, LOGIN_URL, BROWSER, HEADLESS);
-	console.log("Logged in successfully!");
 	
+	const commands = new Commands(page);
+
 	// make post
 	const text = "Hello world!";
-	commands.makePost(page, text);
+	commands.makePost(text);
 })();
