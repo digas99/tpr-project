@@ -2,6 +2,12 @@
 
 ## Bot
 
+Make sure you have npm and Node.js installed.
+```bash
+$ sudo apt update
+$ sudo apt install nodejs npm
+```
+
 To run the Twitter bot, you have to first create a .env file inside the folder `/bot` with the following content:
 
 ```bash

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { login } = require('./login.js');
+const commands = require('./commands.js');
 
 USER = process.env.EMAIL;
 PASS = process.env.PASSWORD;
@@ -14,4 +15,8 @@ LOGIN_URL = process.env.URL;
 
 	const page = await login(USER, PASS, VERIFICATION, LOGIN_URL, BROWSER, HEADLESS);
 	console.log("Logged in successfully!");
+	
+	// make post
+	const text = "Hello world!";
+	commands.makePost(page, text);
 })();
