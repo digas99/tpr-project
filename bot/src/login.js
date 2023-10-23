@@ -57,5 +57,14 @@ module.exports = {
 		console.log("Logged in successfully!");
 
 		return page;
+	},
+	acceptCookies: async (page) => {
+		const acceptCookiesSelector = "div[data-testid='BottomBar'] div[role='button']";
+		const acceptCookiesButton = await page.$(acceptCookiesSelector);
+		if (acceptCookiesButton) {
+			await acceptCookiesButton.click();
+		} 
+		
+		console.log("Accepted cookies!");
 	}
 }

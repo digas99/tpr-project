@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { login } = require('./login.js');
+const { login, acceptCookies } = require('./login.js');
 const Commands = require('./commands.js');
 
 USER = process.env.EMAIL;
@@ -14,10 +14,13 @@ LOGIN_URL = process.env.URL;
 	console.log("Starting bot...");
 
 	const page = await login(USER, PASS, VERIFICATION, LOGIN_URL, BROWSER, HEADLESS);
-	
+	await acceptCookies(page);
+
 	const commands = new Commands(page);
 
 	// make post
-	const text = "Hello world!";
-	commands.makePost(text);
+	//const text = "Hello!";
+	//commands.makePost(text);
+	const message = "Mensagem";
+	commands.sendMessage("diogopowerlol", message);
 })();
