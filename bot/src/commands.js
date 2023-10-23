@@ -1,3 +1,6 @@
+const urls = require('../config/constants.js').URLS;
+const log = require('../utils/utils.js').log;
+
 class Commands {
 	constructor(page) {
 		this.page = page;
@@ -6,24 +9,24 @@ class Commands {
 	async getTimelinePost(index) {
 		const postSelector = `div[aria-label='Timeline: Your Home Timeline'] div[data-testid='cellInnerDiv']:nth-child(${index}) article[data-testid='tweet']`;
 		await this.page.waitForSelector(postSelector);
-		console.log(`Found post ${index}`);
+		log(`Found post ${index}`);
 		return await this.page.$(postSelector);
 	}
 
 	async likePost(post) {
 		const likeButton = await post.$("div[data-testid='like']");
 		await likeButton.click();
-		console.log("Liked post!");
+		log("Liked post!");
 	}
 
 	async dislikePost(post) {
 		const dislikeButton = await post.$("div[data-testid='unlike']");
 		await dislikeButton.click();
-		console.log("Disliked post!");
+		log("Disliked post!");
 	}
 
 	async makePost(text) {
-		this.redirect("https://twitter.com/home");
+		this.redirect(urls.HOME);
 
 		const textSelector = "div[data-testid='tweetTextarea_0']";
 		await this.writeText(this.page, textSelector, text);
@@ -31,8 +34,8 @@ class Commands {
 		const postButton = await this.page.$("div[data-testid='tweetButtonInline']");
 		await postButton.click();
 		
-		console.log("Created Post!");
-		console.log(`Text: ${text}`);
+		log("Created Post!");
+		log(`Text: ${text}`);
 	}
 
 	async commentPost(post, text) {
@@ -42,32 +45,33 @@ class Commands {
 		const postButton = await post.$("div[data-testid='tweetButton']");
 		await postButton.click();
 
-		console.log("Commented on post!");
-		console.log(`Text: ${text}`);
+		log("Commented on post!");
+		log(`Text: ${text}`);
 	}
 
 	async sendMessage(user, text) {
-		this.redirect("https://twitter.com/messages", false);
+		const redirected = await this.redirect(urls.DIRECT, false);
 
-		// click on a user to open chat
-		const usersSelector = "div[data-testid='activeRoute']";
-		await this.page.waitForSelector(usersSelector);
+		// if redirected, click on user
+		if (redirected) {
+			// click on a user to open chat
+			const usersSelector = "div[data-testid='activeRoute']";
+			await this.page.waitForSelector(usersSelector);
 
-		const clickedUserTab = await this.page.$$eval(usersSelector, (users, user) => {
-			console.log(users, user);
-			const result = users.find(userElem => userElem.querySelector(`a[href='/${user}']`));
-			console.log(result);
-			if (result) {
-				const conversation = result.querySelector("div[data-testid='conversation'] > div > div:nth-child(2)");
-				conversation.click();
+			const clickedUserTab = await this.page.$$eval(usersSelector, (users, user) => {
+				const result = users.find(userElem => userElem.querySelector(`a[href='/${user}']`));
+				if (result) {
+					const conversation = result.querySelector("div[data-testid='conversation'] > div > div:nth-child(2)");
+					conversation.click();
+				}
+	
+				return result !== undefined;
+			}, user);
+	
+			if (!clickedUserTab) {
+				log(`User ${user} not found!`);
+				return;
 			}
-
-			return result !== undefined;
-		}, user);
-
-		if (!clickedUserTab) {
-			console.log(`User ${user} not found!`);
-			return;
 		}
 
 		// write message
@@ -75,11 +79,12 @@ class Commands {
 		await this.writeText(this.page, textSelector, text);
 
 		const postButtonSelector = "div[aria-label='Send']";
+		await this.page.waitForSelector(postButtonSelector);
 		const postButton = await this.page.$(postButtonSelector);
 		await postButton.click();
 
-		console.log(`Sent message to ${user}!`);
-		console.log(`Text: ${text}`);
+		log(`Sent message to ${user}!`);
+		log(`Text: ${text}`);
 	}
 
 	async writeText(post, selector, text) {
@@ -90,12 +95,12 @@ class Commands {
 
 	async redirect(url, exact=true) {
 		const currentUrl = await this.page.url();
-		const goto = exact && currentUrl !== url || !exact && !currentUrl.includes(url);
-		if (goto) {
+		const shouldRedirect = exact && currentUrl !== url || !exact && !currentUrl.includes(url);
+		if (shouldRedirect) {
 			await this.page.goto(url);
-			await this.page.waitForNavigation();
-			console.log(`Redirected to ${url}`);
+			log(`Redirected to ${url}`);
 		}
+		return shouldRedirect;
 	}
 }
 

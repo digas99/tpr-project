@@ -8,5 +8,9 @@ module.exports = {
 			}
 		}
 		return null;
+	},
+	log: (text) => {
+		const timestamp = new Date().toLocaleString();
+		console.log(`[${timestamp}] ${text}`);
 	}
 }

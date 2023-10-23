@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const utils = require('../utils/utils.js');
+const log = require('../utils/utils.js').log;
 
 module.exports = {
 	login: async (user, pass, verification, url, executable, headless=false) => {
@@ -9,7 +10,7 @@ module.exports = {
 			args: ['--no-sandbox', '--disable-setuid-sandbox']
 		}
 
-		console.log("Launching browser...");
+		log("Launching browser...");
 		const browser = await puppeteer.launch(options);
 
 		const page = await browser.newPage();
@@ -18,7 +19,7 @@ module.exports = {
 		// fill in username
 		const loginSelector = "input[autocomplete='username']";
 		await page.waitForSelector(loginSelector);
-		console.log("Filling in username...");
+		log("Filling in username...");
 		await page.type(loginSelector, user);
 
 		// click button next
@@ -26,25 +27,25 @@ module.exports = {
 		nextButton = await utils.getElementByInnerText(page, "div[role='button'] div[dir='ltr']", "Next");
 		await nextButton.click();
 		
-		console.log("Filling in password...");
+		log("Filling in password...");
 
 		// fill in password
 		const passwordSelector = "input[autocomplete='current-password']";
 		const passwordInput = await page.$(passwordSelector);
 		if (!passwordInput) {
-			console.log("Password input not found, checking for verification...");
+			log("Password input not found, checking for verification...");
 			
 			// fill twitter's unusual activity phone/username verification
 			const verificationSelector = "input[data-testid='ocfEnterTextTextInput']";
 			await page.waitForSelector(verificationSelector);
-			console.log("Filling in verification text...");
+			log("Filling in verification text...");
 			await page.type(verificationSelector, verification);
 			nextButton = await utils.getElementByInnerText(page, "div[role='button'] div[dir='ltr']", "Next");
 			await nextButton.click();
 		}	
 
 		await page.waitForSelector(passwordSelector);
-		console.log("Filling in password...");
+		log("Filling in password...");
 		await page.type(passwordSelector, pass);
 
 		// click button login
@@ -54,7 +55,7 @@ module.exports = {
 		// wait for page to load
 		await page.waitForNavigation();
 
-		console.log("Logged in successfully!");
+		log("Logged in successfully!");
 
 		return page;
 	},
@@ -65,6 +66,6 @@ module.exports = {
 			await acceptCookiesButton.click();
 		} 
 		
-		console.log("Accepted cookies!");
+		log("Accepted cookies!");
 	}
 }

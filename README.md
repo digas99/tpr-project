@@ -19,9 +19,6 @@ VERIFICATION="account_phone_or_username" # account's phone number or username
 # browser (not needed for deployment with Docker)
 BROWSER="/path/to/chrome/executable" # for puppeteer
 HEADLESS=false # whether to run the browser in headless mode or not
-
-# url
-URL="https://twitter.com/i/flow/login" # twitter login page
 ```
 
 Then, you can setup and run the bot either with Docker or with Node.js.
