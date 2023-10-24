@@ -1,4 +1,4 @@
-const urls = require('../config/constants.js').URLS;
+const { URLS } = require('../config/constants.js');
 const log = require('../utils/utils.js').log;
 
 class Commands {
@@ -26,7 +26,7 @@ class Commands {
 	}
 
 	async makePost(text) {
-		this.redirect(urls.HOME);
+		this.redirect(URLS.HOME);
 
 		const textSelector = "div[data-testid='tweetTextarea_0']";
 		await this.writeText(this.page, textSelector, text);
@@ -50,7 +50,7 @@ class Commands {
 	}
 
 	async sendMessage(user, text) {
-		const redirected = await this.redirect(urls.DIRECT, false);
+		const redirected = await this.redirect(URLS.DIRECT, false);
 
 		// if redirected, click on user
 		if (redirected) {
@@ -77,6 +77,12 @@ class Commands {
 		// write message
 		const textSelector = "div[data-testid='dmComposerTextInput']";
 		await this.writeText(this.page, textSelector, text);
+
+		// wait for the text to be written
+		await this.page.waitForFunction((textSelector, expectedText) => {
+			const element = document.querySelector(textSelector);
+			return element && element.textContent.trim() === expectedText;
+		}, {}, textSelector, text);
 
 		const postButtonSelector = "div[aria-label='Send']";
 		await this.page.waitForSelector(postButtonSelector);

@@ -29,6 +29,9 @@ module.exports = {
 		
 		log("Filling in password...");
 
+		// wait for next step to load
+		await page.waitForSelector("div[aria-labelledby='modal-header']");
+
 		// fill in password
 		const passwordSelector = "input[autocomplete='current-password']";
 		const passwordInput = await page.$(passwordSelector);
