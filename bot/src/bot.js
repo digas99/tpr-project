@@ -1,8 +1,9 @@
 require('dotenv').config();
 const { login, acceptCookies } = require('./login.js');
 const Commands = require('./commands.js');
+const { log, sleep } = require('../utils/utils.js');
 const { URLS, COMMANDS } = require('../config/constants.js');
-const { log, hold } = require('../utils/utils.js');
+const MESSAGES = require('../config/messages.js');
 
 USER = process.env.EMAIL;
 PASS = process.env.PASSWORD;
@@ -11,13 +12,13 @@ BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 
 const nextAction = () => {
-	log("");
-	hold(COMMANDS.DELAY);
+	log(MESSAGES.EMPTY);
+	sleep(COMMANDS.DELAY);
 }
 
 // run bot
 (async () => {
-	log("Starting bot...");
+	log(MESSAGES.STARTING);
 
 	const page = await login(USER, PASS, VERIFICATION, URLS.LOGIN, BROWSER, HEADLESS);
 	nextAction();
@@ -26,9 +27,6 @@ const nextAction = () => {
 
 	const commands = new Commands(page);
 
-	// make post
-	//const text = "Hello!";
-	//commands.makePost(text);
 	await commands.sendMessage("diogopowerlol", "Message 1");
 	nextAction();
 	await commands.sendMessage("diogopowerlol", "Message 2");

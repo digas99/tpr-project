@@ -5,6 +5,6 @@ module.exports = {
 		DIRECT: "https://twitter.com/messages",
 	},
 	COMMANDS: {
-		DELAY: 500,
+		DELAY: 200,
 	}
 }

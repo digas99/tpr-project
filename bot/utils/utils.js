@@ -13,5 +13,5 @@ module.exports = {
 		const timestamp = new Date().toLocaleString();
 		console.log(`[${timestamp}] ${text}`);
 	},
-	hold: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+	sleep: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
 }
