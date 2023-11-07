@@ -1,7 +1,7 @@
-const { URLS } = require('../config/constants.js');
-const log = require('../utils/utils.js').log;
-const MESSAGES = require('../config/messages.js');
-const QUERIES = require('../config/queries.js');
+const { URLS } = require('../../config/constants.js');
+const log = require('../../utils/utils.js').log;
+const MESSAGES = require('../../config/messages.js');
+const QUERIES = require('../../config/queries.js');
 
 class Commands {
 	constructor(page) {
@@ -11,8 +11,15 @@ class Commands {
 	async getTimelinePost(index) {
 		const postSelector = QUERIES.POST_WRAPPER.format(index);
 		await this.page.waitForSelector(postSelector);
-		log(MESSAGES.POST_FOUND.format(index));
 		return await this.page.$(postSelector);
+	}
+
+	async getPostContent(post) {
+		const postTextElem = await post.$(QUERIES.POST_TEXT);
+		if (postTextElem)
+			return await postTextElem.evaluate(node => node.innerText);
+		else
+			return "";
 	}
 
 	async likePost(post) {
@@ -27,12 +34,13 @@ class Commands {
 		log(MESSAGES.POST_DISLIKED);
 	}
 
-	async makePost(text) {
+	async makePost(text, hashtags=[]) {
 		this.redirect(URLS.HOME);
 
 		const textSelector = QUERIES.TEXT_AREA;
-		await this.writeText(this.page, textSelector, text);
-		
+		text += hashtags.length > 0 ? ` ${hashtags.join(" ")}` : "";
+		await this.writeText(this.page, textSelector, text+" ");
+
 		const postButton = await this.page.$(QUERIES.POST_BUTTON);
 		await postButton.click();
 		

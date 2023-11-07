@@ -1,8 +1,8 @@
 const puppeteer = require('puppeteer');
-const utils = require('../utils/utils.js');
-const log = require('../utils/utils.js').log;
-const MESSAGES = require('../config/messages.js');
-const QUERIES = require('../config/queries.js');
+const utils = require('../../utils/utils.js');
+const log = require('../../utils/utils.js').log;
+const MESSAGES = require('../../config/messages.js');
+const QUERIES = require('../../config/queries.js');
 
 module.exports = {
 	login: async (user, pass, verification, url, executable, headless=false) => {
@@ -31,18 +31,24 @@ module.exports = {
 		
 		log(MESSAGES.PASSWORD);
 
-		// wait for next step to load
-		await page.waitForSelector("div[aria-labelledby='modal-header']");
-
 		// fill in password
 		const passwordSelector = QUERIES.LOGIN_PASSWORD;
-		const passwordInput = await page.$(passwordSelector);
-		if (!passwordInput) {
+		const verificationSelector = QUERIES.LOGIN_VERIFICATION;
+		const passwordPromise = page.waitForSelector(passwordSelector);
+		const verificationPromise = page.waitForSelector(verificationSelector);
+		
+		// wait for password input or verification, whichever comes first
+		await Promise.race([passwordPromise, verificationPromise]);
+		
+		// check with eval if verification input is present
+		const hasVerification = await page.evaluate((selector) => {
+			return document.querySelector(selector) !== null;
+		}, verificationSelector);
+
+		if (hasVerification) {
 			log(MESSAGES.VERIFICATION_NEEDED);
 			
 			// fill twitter's unusual activity phone/username verification
-			const verificationSelector = QUERIES.LOGIN_VERIFICATION;
-			await page.waitForSelector(verificationSelector);
 			log(MESSAGES.VERIFICATION);
 			await page.type(verificationSelector, verification);
 			nextButton = await utils.getElementByInnerText(page, QUERIES.LOGIN_BUTTON, "Next");

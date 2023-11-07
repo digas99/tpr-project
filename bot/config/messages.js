@@ -1,5 +1,5 @@
 module.exports = {
-	STARTING: "Starting bot...",
+	STARTING: "Starting {0}...",
 	BROWSER: "Launching browser...",
 	EMPTY: "",
 
@@ -24,6 +24,15 @@ module.exports = {
 	POST_DISLIKED: "Disliked post!",
 	POST_COMMENTED: "Commented on post!",
 	POST_CREATED: "Created post!",
+
+	CHECKING_COMMUNICATION_CHANNEL: "Checking communication channel for topic #{0}...",
+
+	COMMUNICATION_OPEN: "Communication on topic #{0} is open!",
+	COMMUNICATION_CLOSED: "Communication on topic #{0} is closed!",
+
+	COMMAND_PROMPT: "bot@{0}$ ",
+	COMMAND_RECEIVED: "Received command: {0}",
+	COMMAND_WAITING: "Waiting for command...",
 }
 
 // https://stackoverflow.com/a/4673436/11488921

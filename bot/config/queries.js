@@ -6,7 +6,8 @@ module.exports = {
 
 	COOKIES_WRAPPER: "div[data-testid='BottomBar'] div[role='button']",
 
-	POST_WRAPPER: "div[aria-label='Timeline: Your Home Timeline'] div[data-testid='cellInnerDiv']:nth-child({0}) article[data-testid='tweet']",
+	POST_WRAPPER: "div[aria-label='Home timeline'] div[data-testid='cellInnerDiv']:nth-child({0}) article[data-testid='tweet']",
+	POST_TEXT: "div[data-testid='tweetText']",
 	POST_LIKE: "div[data-testid='like']",
 	POST_DISLIKE: "div[data-testid='unlike']",
 	POST_BUTTON: "div[data-testid='tweetButtonInline']",
