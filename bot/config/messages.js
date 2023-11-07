@@ -33,6 +33,7 @@ module.exports = {
 	COMMAND_PROMPT: "bot@{0}$ ",
 	COMMAND_RECEIVED: "Received command: {0}",
 	COMMAND_WAITING: "Waiting for command...",
+	COMMAND_OUTPUT_WAITING: "Waiting for output...",
 }
 
 // https://stackoverflow.com/a/4673436/11488921

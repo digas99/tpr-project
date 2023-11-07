@@ -29,8 +29,6 @@ module.exports = {
 		nextButton = await utils.getElementByInnerText(page, QUERIES.LOGIN_BUTTON, "Next");
 		await nextButton.click();
 		
-		log(MESSAGES.PASSWORD);
-
 		// fill in password
 		const passwordSelector = QUERIES.LOGIN_PASSWORD;
 		const verificationSelector = QUERIES.LOGIN_VERIFICATION;

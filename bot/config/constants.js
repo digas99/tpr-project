@@ -12,5 +12,6 @@ module.exports = {
 	COMMUNICATION: {
 		OPEN: "Communication opened.",
 		CLOSE: "Communication closed.",
+		CHECK_INTERVAL: 20000,
 	}
 }

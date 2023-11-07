@@ -1,3 +1,5 @@
+const puppeteer = require('puppeteer');
+
 const { URLS } = require('../../config/constants.js');
 const log = require('../../utils/utils.js').log;
 const MESSAGES = require('../../config/messages.js');
@@ -10,8 +12,15 @@ class Commands {
 
 	async getTimelinePost(index) {
 		const postSelector = QUERIES.POST_WRAPPER.format(index);
-		await this.page.waitForSelector(postSelector);
-		return await this.page.$(postSelector);
+		try {
+			await this.page.waitForSelector(postSelector);
+			return await this.page.$(postSelector);
+		} catch (error) {
+			if (error instanceof puppeteer.TimeoutError) {
+				log("Puppeteer Timeout Error: Post element discarded.");
+				return null;
+			} else throw error;
+		}
 	}
 
 	async getPostContent(post) {
