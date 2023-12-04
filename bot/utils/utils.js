@@ -14,4 +14,9 @@ module.exports = {
 		console.log(`[${timestamp}] ${text}`);
 	},
 	sleep: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
+	Difficulty: {
+		Dumb: 0,
+		Regular: 1,
+		Advanced: 2,
+	},
 }
