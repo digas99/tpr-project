@@ -43,7 +43,7 @@ $ docker run --name tpr-bot tpr-bot
 
 ```bash
 chmod +x bot.sh
-./bot.sh
+./bot.sh [difficulty]	# difficulty [0, 1, 2], default is 0
 ```
 
 or

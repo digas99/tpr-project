@@ -43,7 +43,7 @@ const attachToCommunicationChannel = async (commands, topic, callback) => {
 	// check if bot closed session
 	if (content != COMMUNICATION.CLOSE && callback) {
 		log(MESSAGES.COMMUNICATION_OPEN.format(topic));
-		await callback();
+		await callback(commands, topic);
 	}
 	else {
 		log(MESSAGES.COMMUNICATION_CLOSED.format(topic));
@@ -54,10 +54,8 @@ const attachToCommunicationChannel = async (commands, topic, callback) => {
 
 const executeCommand = async (commands, topic) => {
 	// user prompt in terminal
-	const command = await new Promise((resolve) => {
+	await new Promise((resolve) => {
 		read.question(MESSAGES.COMMAND_PROMPT.format(topic.slice(0, 12)+"..."), async command => {
-			// read.close();
-
 			// build tweet
 			const timestmap = Date.now();
 			command = "COMMAND: " + command.trim() + ` [${timestmap}]`;		
@@ -68,10 +66,7 @@ const executeCommand = async (commands, topic) => {
 		});
 	});
 
-	const output = await fetchOutput(commands, topic);
-	if (output) {
-	  console.log(output);
-	}
+	await fetchOutput(commands, topic);
 }
 
 const fetchOutput = async (commands, topic) => {
@@ -106,6 +101,10 @@ const fetchOutput = async (commands, topic) => {
     return content;
 }
 
+async function run(commands, topic) {
+	await executeCommand(commands, topic);
+}
+
 // run bot
 (async () => {
 	log(MESSAGES.STARTING.format(path.basename(__filename).replace(".js", "")));
@@ -116,8 +115,5 @@ const fetchOutput = async (commands, topic) => {
 	nextAction();
 
 	const commands = new Commands(page);
-
-	attachToCommunicationChannel(commands, TOPIC, async () => {
-		await executeCommand(commands, TOPIC);
-	});
+	attachToCommunicationChannel(commands, TOPIC, run);
 })();
