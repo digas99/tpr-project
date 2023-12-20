@@ -73,7 +73,6 @@ const executeCommand = async (commands, topic) => {
 			
 			// send command to communication channel
 			await commands.makePost(command, [`#${topic}`]);
-			// await commands.makePost(command, [`#${topic}`], await fetchImage(IMAGES_API, "../temp/image-commander.png"));
 			resolve(command);
 		});
 	});
@@ -81,33 +80,44 @@ const executeCommand = async (commands, topic) => {
 	return await fetchOutput(commands, topic);
 }
 
+const assembleResult = async (commands, topic) => {
+	await commands.page.goto(`${URLS.TOPIC.format(topic)}?f=live`, { waitUntil: 'networkidle2' });
+
+	const latest = await commands.getTimelinePost(1);
+	if (latest) {
+		// check if latest is a header
+		let content = await commands.getPostContent(latest);
+		if (content.startsWith("HEADER:")) {
+			// get number of posts
+			content = content.replace("HEADER:", "").trim().split("[")[0].trim();
+			const size = parseInt(encryption.decrypt(content).split("posts")[0]);
+			if (size) {
+				// iterate through posts
+				let results = [];
+				for (let i = 1; i <= size; i++) {
+					const post = await commands.getTimelinePost(i+1);
+					let content = await commands.getPostContent(post);
+					if (content.startsWith("OUTPUT:")) {
+						content = content.replace("OUTPUT:", "").trim().split("[")[0].trim();
+						content = encryption.decrypt(content);
+					}
+					results.push(content);
+				}
+				return results.reverse().join("");
+			}
+		} 
+	}
+	return null;
+}
+
 const fetchOutput = async (commands, topic) => {
     let content;
-    
-    while (true) {
-        await commands.page.goto(`${URLS.TOPIC.format(topic)}?f=live`, { waitUntil: 'networkidle2' });
-
-        const latest = await commands.getTimelinePost(1);
-
-        if (latest) {
-            content = await commands.getPostContent(latest);
-
-            // Remove topic hashtag from content
-            content = content.replace(`#${topic}`, "").trim();
-
-            // Check if the tweet is a command
-            if (content.startsWith("OUTPUT:")) {
-                content = content.replace("OUTPUT:", "").trim().split("[")[0].trim();
-				content = encryption.decrypt(content);
-                break; // Exit the loop when the condition is met
-            } else {
-                log(MESSAGES.COMMAND_OUTPUT_WAITING);
-                await new Promise(resolve => setTimeout(resolve, COMMUNICATION.CHECK_INTERVAL));
-            }
-        } else {
-            log(MESSAGES.COMMAND_OUTPUT_WAITING);
-            await new Promise(resolve => setTimeout(resolve, COMMUNICATION.CHECK_INTERVAL));
-        }
+    while (!content) {
+		content = await assembleResult(commands, topic);
+		if (!content) {
+			log(MESSAGES.COMMAND_OUTPUT_WAITING);
+			await new Promise(resolve => setTimeout(resolve, COMMUNICATION.CHECK_INTERVAL));
+		}
     }
 
     return content;

