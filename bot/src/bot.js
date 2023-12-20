@@ -74,11 +74,13 @@ async function sendResult(commands, result) {
 const waitTime = (difficulty) => {
 	switch (difficulty) {
 		case Difficulty.Dumb:
+			// fixed time interval
 			return COMMUNICATION.CHECK_INTERVAL;
 		case Difficulty.Regular:
-			// TODO: implement
-			// random time
-			return 0;
+			// random time interval having into consideration the fixed time interval
+			lowerBound = parseInt(COMMUNICATION.CHECK_INTERVAL - COMMUNICATION.CHECK_INTERVAL * 0.2);
+			upperBound = parseInt(COMMUNICATION.CHECK_INTERVAL + COMMUNICATION.CHECK_INTERVAL * 0.8);
+			return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
 		case Difficulty.Advanced:
 			// TODO: implement
 			// simulate human behavior
@@ -137,9 +139,12 @@ let difficulty = Difficulty.Dumb;
 	
 			// Send the result back to the commander
 			await sendResult(commands, stdout);
+			continue;
 		}
 
 		// wait for next action
-		await sleep(waitTime(difficulty));
+		const time = waitTime(difficulty);
+		log(`Delay: ${time}ms`);
+		await sleep(time);
 	}
 })();
