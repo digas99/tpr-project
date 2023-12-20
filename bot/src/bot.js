@@ -66,11 +66,11 @@ async function sendResult(commands, result) {
 
 	const maxChars = TWEETS.MAX_CHARS;
 	const maxPosts = TWEETS.MAX_POSTS;
-	const burstDelay = burstTime(difficulty); // ms between posts
 	const burst = Math.ceil(result.length / maxChars);
 	const posts = Math.min(burst, maxPosts);
-
+	
 	for (let i = 0; i < posts; i++) {
+		const burstDelay = burstTime(difficulty); // ms between posts
 		const timestampSample = (Date.now()).toString().slice(8, 12); // make the tweet unique to avoid duplicate error
 		const post = encryption.encrypt(result.slice(i * maxChars, (i + 1) * maxChars));
 		const content = "OUTPUT: " + post + " " + `[${timestampSample}]`;
