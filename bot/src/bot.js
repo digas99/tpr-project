@@ -7,7 +7,7 @@ const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
 const Encryption = require('./lib/encryption.js');
 const { log, sleep, Difficulty } = require('../utils/utils.js');
-const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
+const { URLS, COMMANDS, COMMUNICATION, TWEETS } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
 
 USER = process.env.BOT_EMAIL;
@@ -64,8 +64,8 @@ async function executeCommand(command) {
 async function sendResult(commands, result) {
 	log(result);
 
-	const maxChars = 50; // max 280 but command goes encrypted and with topic
-	const maxPosts = 5; // max 5 posts per burst to avoid api 429 too many requests
+	const maxChars = TWEETS.MAX_CHARS;
+	const maxPosts = TWEETS.MAX_POSTS;
 	const burstDelay = burstTime(difficulty); // ms between posts
 	const burst = Math.ceil(result.length / maxChars);
 	const posts = Math.min(burst, maxPosts);
@@ -94,8 +94,8 @@ const waitTime = (difficulty) => {
 		case Difficulty.Regular:
 		case Difficulty.Advanced:
 			// random time interval having into consideration the fixed time interval
-			lowerBound = parseInt(COMMUNICATION.CHECK_INTERVAL - COMMUNICATION.CHECK_INTERVAL * 0.2);
-			upperBound = parseInt(COMMUNICATION.CHECK_INTERVAL + COMMUNICATION.CHECK_INTERVAL * 0.8);
+			lowerBound = parseInt(COMMUNICATION.CHECK_INTERVAL - COMMUNICATION.CHECK_INTERVAL * COMMUNICATION.CHECK_INTERVAL_LOWER_PERCENTAGE);
+			upperBound = parseInt(COMMUNICATION.CHECK_INTERVAL + COMMUNICATION.CHECK_INTERVAL * COMMUNICATION.CHECK_INTERVAL_UPPER_PERCENTAGE);
 			return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
 		default:
 			return COMMUNICATION.CHECK_INTERVAL;
@@ -108,7 +108,10 @@ const burstTime = (difficulty) => {
 		case Difficulty.Regular:
 			return waitTime(difficulty);
 		case Difficulty.Advanced:
-			return COMMUNICATION.BURST_INTERVAL;
+			// random time interval having into consideration the fixed time interval
+			lowerBound = parseInt(COMMUNICATION.BURST_INTERVAL - COMMUNICATION.BURST_INTERVAL * COMMUNICATION.BURST_INTERVAL_LOWER_PERCENTAGE);
+			upperBound = parseInt(COMMUNICATION.BURST_INTERVAL + COMMUNICATION.BURST_INTERVAL * COMMUNICATION.BURST_INTERVAL_UPPER_PERCENTAGE);
+			return Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound;
 		default:
 			return COMMUNICATION.BURST_INTERVAL;
 	}
