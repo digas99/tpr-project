@@ -1,11 +1,12 @@
 require('dotenv').config();
 const path = require('path');
 const { exec } = require('child_process');
+const fs = require('fs');
 
 const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
 const Encryption = require('./lib/encryption.js');
-const { log, sleep, Difficulty } = require('../utils/utils.js');
+const { log, sleep, Difficulty, fetchImage } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
 
@@ -16,6 +17,7 @@ BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 TOPIC = process.env.TOPIC;
 SECRET = process.env.CONTENT_ENCRYPTION_SECRET;
+IMAGES_API = process.env.PLACEHOLDER_IMAGES_API;
 
 const encryption = new Encryption('aes-256-cbc', SECRET);
 
@@ -66,6 +68,7 @@ async function sendResult(commands, result) {
 	result = encryption.encrypt(result);
 	result = "OUTPUT: " + result + " " + `[${timestampSample}]`;
 	await commands.makePost(result, [`#${TOPIC}`]);
+	// await commands.makePost(result, [`#${TOPIC}`], await fetchImage(IMAGES_API, "../temp/image-bot.png"));
 }
 
 const waitTime = (difficulty) => {
@@ -88,6 +91,15 @@ const waitTime = (difficulty) => {
 	}
 }
 
+process.on('SIGINT', function() {
+	// delete image-bot.png from temp folder if exists
+	if (fs.existsSync(path.join(__dirname, "../temp/image-bot.png")))
+		fs.unlinkSync(path.join(__dirname, "../temp/image-bot.png"));
+	
+	log(MESSAGES.EXITING);
+	process.exit();
+});
+
 let difficulty = Difficulty.Dumb;
 
 // run bot
@@ -109,6 +121,7 @@ let difficulty = Difficulty.Dumb;
 
 	// open communication channel and pass timestamp
 	await commands.makePost(`${COMMUNICATION.OPEN} [${Date.now()}]`, [`#${TOPIC}`]);
+	// await commands.makePost(`${COMMUNICATION.OPEN} [${Date.now()}]`, [`#${TOPIC}`], await fetchImage(IMAGES_API, "../temp/image-bot.png"));
 	nextAction();
 
 	// wait for command from commander

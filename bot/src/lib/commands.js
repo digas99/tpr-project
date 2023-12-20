@@ -23,6 +23,22 @@ class Commands {
 		}
 	}
 
+	async getPostUser(post) {
+		const userElem = await post.$(QUERIES.POST_USER);
+		if (userElem) {
+			const user = await userElem.evaluate(node => node.innerText.split("\n"));
+			return {
+				name: user[0],
+				username: user[1].replace("@", "")
+			};
+		}
+		else
+			return {
+				name: "",
+				username: ""
+			};
+	}
+
 	async getPostContent(post) {
 		const postTextElem = await post.$(QUERIES.POST_TEXT);
 		if (postTextElem)
@@ -43,15 +59,29 @@ class Commands {
 		log(MESSAGES.POST_DISLIKED);
 	}
 
-	async makePost(text, hashtags=[]) {
+	async makePost(text, hashtags=[], imagePath=null) {
 		this.redirect(URLS.HOME);
 
 		const textSelector = QUERIES.TEXT_AREA;
 		text += hashtags.length > 0 ? ` ${hashtags.join(" ")}` : "";
 		await this.writeText(this.page, textSelector, text+" ");
 
+		if (imagePath) {
+			const newPostContainer = await this.page.$(QUERIES.TOOL_BAR);
+			await this.uploadImage(newPostContainer, imagePath);
+		}
+
 		const postButton = await this.page.$(QUERIES.POST_BUTTON);
 		await postButton.click();
+
+		// wait for "div[role='alert']" and return false it it doesn't appear
+		try {
+			await this.page.waitForSelector("div[role='alert']");
+		} catch (error) {
+			if (error instanceof puppeteer.TimeoutError) {
+				return false;
+			} else throw error;
+		}
 		
 		log(MESSAGES.POST_CREATED);
 		log(MESSAGES.MESSAGE_CONTENT.format(text));
@@ -126,6 +156,14 @@ class Commands {
 			log(MESSAGES.REDIRECT.format(url));
 		}
 		return shouldRedirect;
+	}
+
+	async uploadImage(newPostContainer, filePath) {
+		const selector = QUERIES.IMAGE_INPUT;
+		await newPostContainer.waitForSelector(selector);
+		const input = await newPostContainer.$(selector);
+		await input.uploadFile(filePath);
+		log(MESSAGES.IMAGE_UPLOADED.format(filePath));
 	}
 }
 

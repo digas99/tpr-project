@@ -27,7 +27,10 @@ HEADLESS=false # whether to run the browser in headless mode or not
 
 # twitter topic
 TOPIC="tenhoemmimtodosossonhosdomundo"
-CONTENT_ENCRYPTION_KEY="some_key" # key used to encrypt the content of the messages
+
+# posts configuration
+CONTENT_ENCRYPTION_SECRET="some_secret" # secret used to encrypt the content of the messages
+PLACEHOLDER_IMAGES_API="api_url_endpoint" # API used to get placeholder images
 ```
 
 Then, you can setup and run the bot either with Docker or with Node.js.

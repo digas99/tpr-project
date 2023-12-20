@@ -1,11 +1,12 @@
 require('dotenv').config();
 const path = require('path');
 const readline = require('readline');
+const fs = require('fs');
 
 const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
 const Encryption = require('./lib/encryption.js');
-const { log, sleep } = require('../utils/utils.js');
+const { log, sleep , fetchImage } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
 
@@ -21,6 +22,7 @@ BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 TOPIC = process.env.TOPIC;
 SECRET = process.env.CONTENT_ENCRYPTION_SECRET;
+IMAGES_API = process.env.PLACEHOLDER_IMAGES_API;
 
 const encryption = new Encryption('aes-256-cbc', SECRET);
 
@@ -29,22 +31,22 @@ const nextAction = () => {
 	sleep(COMMANDS.DELAY);
 }
 
-const attachToCommunicationChannel = async (commands, topic, callback) => {
+const checkSession = async (commands, topic) => {
 	commands.page.goto(`${URLS.TOPIC.format(topic)}?f=live`, {waitUntil: 'networkidle2'});
-
-	// within this hashtag page, check if the bot has opened a session
 	const latest = await commands.getTimelinePost(1);
-	if (!latest) {
-		attachToCommunicationChannel(commands, topic, callback);
-		return;
+	if (latest) {
+		const user = await commands.getPostUser(latest);
+		if (user.username == "tprproject") {
+			const content = await commands.getPostContent(latest);
+			return content != COMMUNICATION.CLOSE;
+		}
 	}
+	return false;
+}
 
-	let content = await commands.getPostContent(latest);
-	// remove topic hashtag from content
-	content = content.replace(`#${topic}`, "").trim();
-
-	// check if bot closed session
-	if (content != COMMUNICATION.CLOSE && callback) {
+const attachToCommunicationChannel = async (commands, topic, callback) => {
+	// within this hashtag page, check if the bot is active
+	if (await checkSession(commands, topic)) {
 		log(MESSAGES.COMMUNICATION_OPEN.format(topic));
 		const success = await callback(commands, topic);
 		// if success, skip waiting interval
@@ -71,6 +73,7 @@ const executeCommand = async (commands, topic) => {
 			
 			// send command to communication channel
 			await commands.makePost(command, [`#${topic}`]);
+			// await commands.makePost(command, [`#${topic}`], await fetchImage(IMAGES_API, "../temp/image-commander.png"));
 			resolve(command);
 		});
 	});
@@ -94,7 +97,7 @@ const fetchOutput = async (commands, topic) => {
 
             // Check if the tweet is a command
             if (content.startsWith("OUTPUT:")) {
-                content = content.replace("OUTPUT:", "").trim().content.split("[")[0].trim();
+                content = content.replace("OUTPUT:", "").trim().split("[")[0].trim();
 				content = encryption.decrypt(content);
                 break; // Exit the loop when the condition is met
             } else {
@@ -109,6 +112,15 @@ const fetchOutput = async (commands, topic) => {
 
     return content;
 }
+
+process.on('SIGINT', function() {
+	// delete image-commander.png from temp folder if exists
+	if (fs.existsSync(path.join(__dirname, "../temp/image-commander.png")))
+		fs.unlinkSync(path.join(__dirname, "../temp/image-commander.png"));
+	
+	log(MESSAGES.EXITING);
+	process.exit();
+});
 
 // returns true to skip interval
 async function run(commands, topic) {

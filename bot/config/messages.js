@@ -34,6 +34,10 @@ module.exports = {
 	COMMAND_RECEIVED: "Received command: {0}",
 	COMMAND_WAITING: "Waiting for command...",
 	COMMAND_OUTPUT_WAITING: "Waiting for output...",
+
+	IMAGE_UPLOADED: "Uploaded image {0}",
+
+	EXITING: "Exiting...",
 }
 
 // https://stackoverflow.com/a/4673436/11488921
