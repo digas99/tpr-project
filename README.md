@@ -27,6 +27,7 @@ HEADLESS=false # whether to run the browser in headless mode or not
 
 # twitter topic
 TOPIC="tenhoemmimtodosossonhosdomundo"
+CONTENT_ENCRYPTION_KEY="some_key" # key used to encrypt the content of the messages
 ```
 
 Then, you can setup and run the bot either with Docker or with Node.js.

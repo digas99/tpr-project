@@ -4,6 +4,7 @@ const readline = require('readline');
 
 const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
+const Encryption = require('./lib/encryption.js');
 const { log, sleep } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
@@ -19,6 +20,9 @@ VERIFICATION = process.env.COMMANDER_VERIFICATION;
 BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 TOPIC = process.env.TOPIC;
+SECRET = process.env.CONTENT_ENCRYPTION_SECRET;
+
+const encryption = new Encryption('aes-256-cbc', SECRET);
 
 const nextAction = () => {
 	log(MESSAGES.EMPTY);
@@ -36,14 +40,18 @@ const attachToCommunicationChannel = async (commands, topic, callback) => {
 	}
 
 	let content = await commands.getPostContent(latest);
-	console.log(content);
 	// remove topic hashtag from content
 	content = content.replace(`#${topic}`, "").trim();
 
 	// check if bot closed session
 	if (content != COMMUNICATION.CLOSE && callback) {
 		log(MESSAGES.COMMUNICATION_OPEN.format(topic));
-		await callback(commands, topic);
+		const success = await callback(commands, topic);
+		// if success, skip waiting interval
+		if (success) {
+			attachToCommunicationChannel(commands, topic, callback);
+			return;
+		}
 	}
 	else {
 		log(MESSAGES.COMMUNICATION_CLOSED.format(topic));
@@ -55,10 +63,11 @@ const attachToCommunicationChannel = async (commands, topic, callback) => {
 const executeCommand = async (commands, topic) => {
 	// user prompt in terminal
 	await new Promise((resolve) => {
-		read.question(MESSAGES.COMMAND_PROMPT.format(topic.slice(0, 12)+"..."), async command => {
+		read.question('\n'+MESSAGES.COMMAND_PROMPT.format(topic.slice(0, 12)+"..."), async command => {
 			// build tweet
-			const timestmap = Date.now();
-			command = "COMMAND: " + command.trim() + ` [${timestmap}]`;		
+			const timestampSample = (Date.now()).toString().slice(8, 12); // make the tweet unique to avoid duplicate error
+			command = encryption.encrypt(command.trim());
+			command = "COMMAND: " + command + " " + `[${timestampSample}]`;		
 			
 			// send command to communication channel
 			await commands.makePost(command, [`#${topic}`]);
@@ -66,7 +75,7 @@ const executeCommand = async (commands, topic) => {
 		});
 	});
 
-	await fetchOutput(commands, topic);
+	return await fetchOutput(commands, topic);
 }
 
 const fetchOutput = async (commands, topic) => {
@@ -85,15 +94,15 @@ const fetchOutput = async (commands, topic) => {
 
             // Check if the tweet is a command
             if (content.startsWith("OUTPUT:")) {
-                content = content.replace("OUTPUT:", "").trim();
-                content = content.split("[")[0].trim();
+                content = content.replace("OUTPUT:", "").trim().content.split("[")[0].trim();
+				content = encryption.decrypt(content);
                 break; // Exit the loop when the condition is met
             } else {
-                console.log(MESSAGES.COMMAND_OUTPUT_WAITING);
+                log(MESSAGES.COMMAND_OUTPUT_WAITING);
                 await new Promise(resolve => setTimeout(resolve, COMMUNICATION.CHECK_INTERVAL));
             }
         } else {
-            console.log(MESSAGES.COMMAND_OUTPUT_WAITING);
+            log(MESSAGES.COMMAND_OUTPUT_WAITING);
             await new Promise(resolve => setTimeout(resolve, COMMUNICATION.CHECK_INTERVAL));
         }
     }
@@ -101,8 +110,13 @@ const fetchOutput = async (commands, topic) => {
     return content;
 }
 
+// returns true to skip interval
 async function run(commands, topic) {
-	await executeCommand(commands, topic);
+	const output = await executeCommand(commands, topic);
+	console.log(output);
+
+	if (output) return true;
+	else return false;
 }
 
 // run bot

