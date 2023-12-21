@@ -71,7 +71,7 @@ The Regular Bot behaves similarly to the Dumb Bot, but it will randomize the int
 
 **Random waits followed by bursts**
 
-The Advanced Bot tries to mimic a human user (in a very basic way). It will still poll the page for new posts (with a randomized interval, like the Regular Bot) but the posts with the result of the command execution are done in a burst, where the time between each post that is part of the same output is very small (but still randomized), unlike the Dumb and Regular Bots that keep the same interval pattern between posts of the same output.
+The Advanced Bot tries to mimic a human user (in a very basic way). It will still poll the page for new posts (with a randomized interval, like the Regular Bot) but the posts with the result of the command execution are done in a burst, where the time between each post that is part of the same output is very small (but still randomized), unlike the Dumb and Regular Bots that keep the same timing approach between posts of the same output as they do with the periodic polling to the web page.
 
 ### Commander
 
