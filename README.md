@@ -178,3 +178,10 @@ $ node src/bot.js
 ```
 
 The same goes for the Commander (*commander.sh*), except using Docker, because it is meant to be run interactively.
+
+
+To run the main script:
+
+```bash
+$ python3 ProfileClass.py
+```
